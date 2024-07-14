@@ -28,14 +28,28 @@ enum IntoColorError {
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
 
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        match (
+            u8::try_from(tuple.0),
+            u8::try_from(tuple.1),
+            u8::try_from(tuple.2),
+        ) {
+            (Ok(red), Ok(green), Ok(blue)) => Ok(Color { red, green, blue }),
+            _ => Err(IntoColorError::IntConversion),
+        }
+    }
 }
 
 // TODO: Array implementation.
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        match arr.map(u8::try_from) {
+            [Ok(red), Ok(green), Ok(blue)] => Ok(Color { red, green, blue }),
+            _ => Err(IntoColorError::IntConversion),
+        }
+    }
 }
 
 // TODO: Slice implementation.
@@ -43,7 +57,22 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
 
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        match slice
+            .iter()
+            .map(|&x| u8::try_from(x))
+            .collect::<Vec<_>>()
+            .as_slice()
+        {
+            [Ok(red), Ok(green), Ok(blue)] => Ok(Color {
+                red: *red,
+                green: *green,
+                blue: *blue,
+            }),
+            [_, _, _] => Err(IntoColorError::IntConversion),
+            _ => Err(IntoColorError::BadLen),
+        }
+    }
 }
 
 fn main() {
